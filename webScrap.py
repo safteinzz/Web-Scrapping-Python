@@ -27,22 +27,28 @@ GUIENLACE = 'interfazWebScrap.ui'
 # =============================================================================
 #         ~IMPORTS
 # =============================================================================
-import sys
-import csv
-import requests
-#import numpy
-# => import clase local -> mostrar tablas dataframes
-from pandasmodel import PandasModel
-#pandas para dataframes y modelos
-import pandas as pd #https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.add.html
-#from bs4 import BeautifulSoup
-from lxml import html
-from textblob import TextBlob, Word
+#Relacionado con el scrapping
+import requests, re
+from bs4 import BeautifulSoup
+#from urllib.parse import urljoin, urlparse
+#from lxml import html
 
+#Prediccion
+from textblob import TextBlob, Word
 import spacy
 sp = spacy.load('en_core_web_sm')
+from unicodetoascii import unicodetoascii
+
+#Datasets y models
+from pandasmodel import PandasModel
+import pandas as pd
+
+#Almacenamiento
+import csv
 
 # --- Interfaz
+#Lanzamiento
+import sys
 #Ventana
 from PyQt5 import uic
 #Messagebox
@@ -53,8 +59,6 @@ from PyQt5 import QtGui
 from PyQt5.QtWidgets import QFileDialog, QMainWindow, QApplication
 #Importar interfaz
 Ui_MainWindow, QtBaseClass = uic.loadUiType(GUIENLACE)
-
-
 
 # =============================================================================
 #         ~FUNCIONES PUBLICAS
@@ -138,7 +142,7 @@ class mainClass(QMainWindow):
     def tEURLPaginaClicked(self, event):
         self.ui.tEURLPagina.setText('')
         self.ui.tEURLPagina.setTextColor(QtGui.QColor(0,0,0))
-        
+    
 # =============================================================================
 #     ~Evento descargar pagina en CSV
 # =============================================================================
@@ -155,36 +159,34 @@ class mainClass(QMainWindow):
             Messagebox('Debes seleccionar donde guardar el fichero', 'Error', 1)        
             return
         
-#        Extraer pagina
-        page = requests.get(self.ui.tEURLPagina.toPlainText())
-        
-#        Comprobar si se ha podido extraer pagina
-        if not page:
+#        Extraer pagina y comprobar
+        res = requests.get(self.ui.tEURLPagina.toPlainText())
+        if not res:
             Messagebox('Error en la carga de la pagina', 'Error', 1) 
             return
             
         else:
 #            Extraer contenido de la pagina
-            tree = html.fromstring(page.content)            
-            comentarios = tree.xpath("//p[@class='partial_entry']/text()")
+            soup = BeautifulSoup(res.content, 'html.parser')
+            comentarios = soup.find_all('p',{'class': 'partial_entry'},text=re.compile('(.*?)',re.UNICODE))
             
 #            Crear y meter datos en csv
+            cantidadComent = 0
             with open(rutaFichero[0], 'w', newline='') as f:
                 fieldnames = ['comentario']
                 thewriter = csv.DictWriter(f, fieldnames=fieldnames)
                 
                 for com in comentarios:
-                    thewriter.writerow({'comentario' : com.encode(encoding='UTF-8',errors='strict')})
-#            
-#            Mostrar filas 
-            with open(rutaFichero[0]) as f:
-                reader = csv.reader(f)
-                row_count = sum(1 for row in reader)
-                datos = ""
-                datos += str(row_count)
-                datos += " filas de comentarios almacenados en "
-                datos += rutaFichero[0]
-            self.ui.pTEStatus.appendPlainText(datos)
+                    com = str(com.encode(encoding='UTF-8',errors='strict'))
+                    x = re.search(">(.*?)<", com) #esta expresion regular directamente en la linea 170 no funciona
+                    res = x.group(1)
+                    res = unicodetoascii(res)
+                    thewriter.writerow({'comentario' : res})
+                    cantidadComent += 1
+                  
+#                Sacar resultados en el plain text edit
+                log = str(cantidadComent) + " filas de comentarios almacenados en " + rutaFichero[0]
+                self.ui.pTEStatus.appendPlainText(log)
         
 # =============================================================================
 #     ~Evento seleccionar CSV para analisis  
@@ -206,12 +208,9 @@ class mainClass(QMainWindow):
         if not archivo:
             Messagebox('Debes Seleccionar un fichero', 'Error', 1)        
             return 
-#        Importar el csv
-#        df = pd.read_csv(self.ui.lEArchivo.text(), encoding = "ISO-8859-1")
         
         with open(archivo) as f:
             reader = csv.reader(f)
-#            df = pd.DataFrame([row[0], TextBlob(row[0]).sentiment] for row in reader) #https://stackoverflow.com/questions/28056171/how-to-build-and-fill-pandas-dataframe-from-for-loop
             rows = []
             valoraciones = []            
             for row in reader:  
@@ -225,25 +224,21 @@ class mainClass(QMainWindow):
                         w = "email"                    
                     else:
                         w = Word(Word(str(word)).spellcheck()[0][0]) #Correción (coje el mayor porcentaje)
-                        w = sp(str(w))[0].lemma_ #Lematización
-                        
+                        w = sp(str(w))[0].lemma_ #Lematización                        
                     nuevaFrase += w + " "
-                print (nuevaFrase)
+                    
                 t = TextBlob(nuevaFrase)
                 rows.append(row[0])
                 sentimiento = t.sentiment
-                print(sentimiento)
                 if -0.20 < sentimiento.polarity < 0.20:
                     valoraciones.append('Neutro')
                 elif sentimiento.polarity <= -0.20:
                     valoraciones.append('Negativo')                    
                 elif sentimiento.polarity >= 0.20:
                     valoraciones.append('Positivo')
-#        print(len(rows))
-#        print(len(valoraciones))
+
         diccionario = {'Comentario': rows, 'Valoracion': valoraciones}  
         df = pd.DataFrame(diccionario) 
-#        df['Valoraciones'] = valoraciones
         modelo = PandasModel(df)
         self.ui.tVResultado.setModel(modelo)
         self.ui.tVResultado.setColumnWidth(0, 520)
