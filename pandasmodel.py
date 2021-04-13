@@ -1,20 +1,21 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Jan  4 21:46:52 2020
+#https://github.com/eyllanesc/stackoverflow/tree/master/questions/44603119
 
-@author: cyber
-"""
+from PyQt5 import QtCore
 
 import pandas as pd
-from PyQt5 import QtCore, QtGui, QtWidgets
 
 class PandasModel(QtCore.QAbstractTableModel): 
     def __init__(self, df = pd.DataFrame(), parent=None): 
         QtCore.QAbstractTableModel.__init__(self, parent=parent)
-        self._df = df.copy()
-
-    def toDataFrame(self):
-        return self._df.copy()
+        self._df = df
+        
+    @property
+    def df(self):
+        return self._df
+    
+    @df.setter
+    def df(self, nuevoDF):
+        self._df = nuevoDF
 
     def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
         if role != QtCore.Qt.DisplayRole:
@@ -39,7 +40,7 @@ class PandasModel(QtCore.QAbstractTableModel):
         if not index.isValid():
             return QtCore.QVariant()
 
-        return QtCore.QVariant(str(self._df.ix[index.row(), index.column()]))        
+        return QtCore.QVariant(str(self._df.iloc[index.row(), index.column()]))
 
     def setData(self, index, value, role):
         row = self._df.index[index.row()]
@@ -67,3 +68,10 @@ class PandasModel(QtCore.QAbstractTableModel):
         self._df.sort_values(colname, ascending= order == QtCore.Qt.AscendingOrder, inplace=True)
         self._df.reset_index(inplace=True, drop=True)
         self.layoutChanged.emit()
+        
+    def add(self, dfAppend): #df1 = pd.DataFrame([['','']], columns=('', ''))
+#        self._df = df.append([pd.Series(['Holi', 'http://holiholi'], index = df.columns)], ignore_index=True)
+        self.layoutAboutToBeChanged.emit()
+        self._df = self._df.append(dfAppend, ignore_index=True)
+        self.layoutChanged.emit()
+        return
