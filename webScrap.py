@@ -21,8 +21,8 @@ https://github.com/safteinzz/Web-Scrapping-Python
 #         ~CONSTANTES
 # =============================================================================
 
-ICOENLACE = 'safteinzz.ico'
-GUIENLACE = 'interfazWebScrap.ui'
+ICOENLACE = 'resources/safteinzz.ico'
+GUIENLACE = 'resources/interfazWebScrap.ui'
 
 # =============================================================================
 #         ~IMPORTS
@@ -37,10 +37,10 @@ from bs4 import BeautifulSoup
 from textblob import TextBlob, Word
 import spacy
 sp = spacy.load('en_core_web_sm')
-from unicodetoascii import unicodetoascii
+from resources.unicodetoascii import unicodetoascii
 
 #Datasets y models
-from pandasmodel import PandasModel
+from resources.pandasmodel import PandasModel
 import pandas as pd
 
 #Almacenamiento
