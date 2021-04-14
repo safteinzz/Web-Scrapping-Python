@@ -228,8 +228,8 @@ class mainClass(QMainWindow):
                     nuevaFrase += w + " "
                     
                 t = TextBlob(nuevaFrase)
-                rows.append(row[0])
                 sentimiento = t.sentiment
+                rows.append(row[0])
                 if -0.20 < sentimiento.polarity < 0.20:
                     valoraciones.append('Neutro')
                 elif sentimiento.polarity <= -0.20:
