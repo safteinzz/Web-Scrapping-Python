@@ -1,4 +1,5 @@
 #https://github.com/eyllanesc/stackoverflow/tree/master/questions/44603119
+#Modified: SaFteiNZz
 
 from PyQt5 import QtCore
 

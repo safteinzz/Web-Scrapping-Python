@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Apr 14 01:26:53 2021
-
-@author: SaFteiNZz
-"""
+#https://gist.github.com/tushortz/9fbde5d023c0a0204333267840b592f9
 
 def unicodetoascii(text):
     TEXT = (text.

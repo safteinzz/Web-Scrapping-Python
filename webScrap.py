@@ -21,7 +21,7 @@ https://github.com/safteinzz/Web-Scrapping-Python
 #         ~CONSTANTES
 # =============================================================================
 
-ICOENLACE = 'icono.png'
+ICOENLACE = 'safteinzz.ico'
 GUIENLACE = 'interfazWebScrap.ui'
 
 # =============================================================================
